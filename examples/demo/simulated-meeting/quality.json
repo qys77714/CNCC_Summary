@@ -1,0 +1,10 @@
+{
+  "segments": 2,
+  "duration_seconds": 50,
+  "corrections": 1,
+  "rejected_corrections": 0,
+  "uncertain_segments": [],
+  "asr_warnings": [],
+  "diarization_enabled": false,
+  "citation_check": "所有引用 ID 均已校验；语义是否支持结论仍需人工抽查"
+}

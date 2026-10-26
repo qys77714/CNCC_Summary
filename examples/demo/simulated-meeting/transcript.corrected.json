@@ -1,0 +1,27 @@
+{
+  "key": "cd5fcf7f8d6fbe6b921034b41d021f41c0e9877474e8045831ed2f967facb210",
+  "segments": [
+    {
+      "id": "s000001",
+      "start": 0.0,
+      "end": 25.0,
+      "speaker": "未区分",
+      "warnings": [],
+      "text": "这是模拟示例。长期记忆可以通过检索增强实现，同时需要设计遗忘机制。",
+      "original_text": "这是模拟示例。长期记忆可以通过检索增墙实现，同时需要设计遗忘机制。",
+      "uncertain": false,
+      "correction_reason": "修正术语同音字"
+    },
+    {
+      "id": "s000002",
+      "start": 25.0,
+      "end": 50.0,
+      "speaker": "未区分",
+      "warnings": [],
+      "text": "评估时需要考虑噪声记忆的影响。本段没有明确执行任务。",
+      "original_text": "评估时需要考虑噪声记忆的影响。本段没有明确执行任务。",
+      "uncertain": false,
+      "correction_reason": ""
+    }
+  ]
+}

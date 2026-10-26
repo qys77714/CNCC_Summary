@@ -1,0 +1,7 @@
+{
+  "source": "模拟示例-不对应真实视频.wav",
+  "key": "demo-v1",
+  "duration": 50,
+  "frames": 800000,
+  "sample_rate": 16000
+}

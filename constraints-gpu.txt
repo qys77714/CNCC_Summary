@@ -1,0 +1,10 @@
+# 固定已核对的核心 API 组合；完整依赖清单由安装脚本导出到 environment.freeze.txt。
+torch==2.8.0
+torchaudio==2.8.0
+torchcodec==0.7.0
+qwen-asr==0.0.6
+transformers==4.57.6
+accelerate==1.12.0
+huggingface-hub>=0.34,<1
+numpy>=2.0,<2.4
+pyannote.audio==4.0.3

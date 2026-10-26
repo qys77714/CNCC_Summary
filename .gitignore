@@ -1,0 +1,16 @@
+.venv/
+.venv-server/
+.env
+models/
+output/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+video/
+dist/
+build/
+environment.freeze.txt
+.claude/

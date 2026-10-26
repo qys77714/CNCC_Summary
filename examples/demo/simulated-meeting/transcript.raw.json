@@ -1,0 +1,23 @@
+{
+  "source": "模拟示例-不对应真实视频.wav",
+  "model": "SIMULATED-NO-ASR",
+  "key": "demo-v1",
+  "segments": [
+    {
+      "id": "s000001",
+      "start": 0.0,
+      "end": 25.0,
+      "speaker": "未区分",
+      "warnings": [],
+      "text": "这是模拟示例。长期记忆可以通过检索增墙实现，同时需要设计遗忘机制。"
+    },
+    {
+      "id": "s000002",
+      "start": 25.0,
+      "end": 50.0,
+      "speaker": "未区分",
+      "warnings": [],
+      "text": "评估时需要考虑噪声记忆的影响。本段没有明确执行任务。"
+    }
+  ]
+}

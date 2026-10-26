@@ -1,0 +1,10 @@
+{"time": "2026-10-26T18:48:51+0800", "stage": "correction", "message": "正在校正转写", "batch": 1, "total": 1}
+{"time": "2026-10-26T18:48:51+0800", "stage": "correction", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
+{"time": "2026-10-26T18:48:51+0800", "stage": "chapters", "message": "正在提炼时间章节", "chapter": 1, "total": 1}
+{"time": "2026-10-26T18:48:51+0800", "stage": "chapters", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
+{"time": "2026-10-26T18:48:51+0800", "stage": "complete", "message": "会议纪要已生成", "report": "/Users/qys/Documents/Project/CNCC/examples/demo/simulated-meeting/minutes.md"}
+{"time": "2026-10-26T18:57:57+0800", "stage": "chapters", "message": "正在提炼时间章节", "chapter": 1, "total": 1}
+{"time": "2026-10-26T18:57:57+0800", "stage": "complete", "message": "会议纪要已生成", "report": "/Users/qys/Documents/Project/CNCC/examples/demo/simulated-meeting/minutes.md"}
+{"time": "2026-10-26T18:59:16+0800", "stage": "correction", "message": "正在校正转写", "batch": 1, "total": 1}
+{"time": "2026-10-26T18:59:16+0800", "stage": "chapters", "message": "正在提炼时间章节", "chapter": 1, "total": 1}
+{"time": "2026-10-26T18:59:16+0800", "stage": "complete", "message": "会议纪要已生成", "report": "/Users/qys/Documents/Project/CNCC/examples/demo/simulated-meeting/minutes.md"}

@@ -1,0 +1,64 @@
+{
+  "key": "30f0d9e0048bd57ac3121512205667ece45dae2dd716f1de8c195d28dda3b476",
+  "title": "模拟示例-不对应真实视频",
+  "summary": {
+    "title": "模拟：智能体记忆讨论",
+    "overview": [
+      {
+        "text": "演示资料：长期记忆需要检索增强与遗忘机制，并应评估噪声记忆的影响。",
+        "sources": [
+          "s000001"
+        ]
+      }
+    ],
+    "key_points": [
+      {
+        "text": "演示资料：长期记忆需要检索增强与遗忘机制，并应评估噪声记忆的影响。",
+        "sources": [
+          "s000001"
+        ]
+      }
+    ],
+    "decisions": [],
+    "actions": [],
+    "questions": [],
+    "terms": [],
+    "uncertainties": []
+  },
+  "chapters": [
+    {
+      "start": 0.0,
+      "end": 50.0,
+      "segment_ids": [
+        "s000001",
+        "s000002"
+      ],
+      "summary": {
+        "title": "模拟：智能体记忆讨论",
+        "overview": [
+          {
+            "text": "演示资料：长期记忆需要检索增强与遗忘机制，并应评估噪声记忆的影响。",
+            "sources": [
+              "s000001"
+            ]
+          }
+        ],
+        "key_points": [
+          {
+            "text": "演示资料：长期记忆需要检索增强与遗忘机制，并应评估噪声记忆的影响。",
+            "sources": [
+              "s000001"
+            ]
+          }
+        ],
+        "decisions": [],
+        "actions": [],
+        "questions": [],
+        "terms": [],
+        "uncertainties": []
+      }
+    }
+  ],
+  "asr_model": "SIMULATED-NO-ASR",
+  "llm_model": "SIMULATED-NO-REAL-INFERENCE"
+}
