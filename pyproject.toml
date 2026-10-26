@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cncc-minutes"
 version = "1.0.0"
-description = "中文长会议视频：多 GPU ASR、可追溯纠错和会议纪要"
+description = "中文长会议视频：多 GPU ASR、主题归并和自由 Markdown 详细总结"
 requires-python = ">=3.11,<3.13"
 dependencies = [
   "httpx==0.28.1", "python-dotenv==1.1.1", "pydantic>=2.11,<3",

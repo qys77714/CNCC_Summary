@@ -1,0 +1,8 @@
+{
+  "stage": "outline",
+  "model": "SIMULATED-NO-REAL-INFERENCE",
+  "content": "{\"title\": \"模拟示例：智能体记忆的设计\", \"introduction\": \"\", \"topics\": [{\"title\": \"记忆的写入与检索\", \"focus\": \"详细解释此主题讨论的机制、例子与限制。\", \"material_ids\": [\"n000001\"]}, {\"title\": \"遗忘机制与噪声控制\", \"focus\": \"详细解释此主题讨论的机制、例子与限制。\", \"material_ids\": [\"n000002\"]}]}",
+  "usage": {
+    "total_tokens": 0
+  }
+}

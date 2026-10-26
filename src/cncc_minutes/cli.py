@@ -83,7 +83,7 @@ def doctor(cfg, cpu=False, check_llm=False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="中文长会议视频 → ASR → 纠错 → 可追溯 Markdown 纪要")
+    parser = argparse.ArgumentParser(description="中文长会议视频 → ASR → 按主题详细总结（自由 Markdown）")
     parser.add_argument("--env", type=Path, default=Path(".env"), help=".env 路径，相对配置以其所在目录为根")
     parser.add_argument("--version", action="version", version=__version__)
     subs = parser.add_subparsers(dest="command", required=True)

@@ -9,7 +9,7 @@
 | ASR | `Qwen/Qwen3-ASR-1.7B` | 中文技术会议识别，支持中英文混合内容 |
 | 强制对齐 | `Qwen/Qwen3-ForcedAligner-0.6B` | 给 ASR 文字补充字/词时间戳 |
 | 可选声音分组 | `pyannote/speaker-diarization-community-1` | 在单场视频内区分声音来源，不识别真实姓名 |
-| 纠错与纪要 | `.env` 指定的 LLM 服务 | 中文纠错、信息提炼、跨章节综合 |
+| 主题总结 | `.env` 指定的 LLM 服务 | 详细材料阅读、跨窗口主题归并、自由 Markdown 写作 |
 
 Qwen 官方于 2026-01-29 发布 ASR 系列，包含 1.7B/0.6B，支持中文及多种方言；对齐模型支持包括中文在内的 11 种语言。2026-06-26 又提供了原生 Transformers 的 `-hf` 版本。本项目选择官方 `qwen-asr==0.0.6` 推理工具及原始模型目录，固定其配套 `transformers==4.57.6`。**不要直接把这里的模型替换成 `-hf` 变体**，那是另一套加载 API。[官方项目与发布时间](https://github.com/QwenLM/Qwen3-ASR)、[模型卡](https://huggingface.co/Qwen/Qwen3-ASR-1.7B)。
 

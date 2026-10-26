@@ -26,84 +26,9 @@ def srt_text(segments):
                      for i, s in enumerate(segments, 1))
 
 
-def summary_sections(summary, cite, heading=2):
-    prefix = "#" * heading
-    lines = []
-    for field, title in [("overview", "内容概览"), ("key_points", "核心观点与技术要点"),
-                         ("decisions", "明确决议"), ("actions", "待办事项"), ("questions", "问答整理"),
-                         ("terms", "术语与概念"), ("uncertainties", "分歧、局限与待确认")]:
-        lines += [f"{prefix} {title}", ""]
-        items = summary[field]
-        if not items:
-            lines += [{"decisions": "原文未明确形成决议。", "actions": "原文未明确提出可执行待办。",
-                       "questions": "本段未识别到明确问答。", "terms": "未提取额外术语解释。",
-                       "uncertainties": "未额外提取；请同时查看文末质量提示。"}.get(field, "未提取。"), ""]
-            continue
-        if field == "actions":
-            lines += ["| 事项 | 责任人 | 截止时间 | 原文依据 |", "| --- | --- | --- | --- |"]
-            for item in items:
-                lines.append(f"| {clean(item['task'])} | {clean(item['owner'] or '未明确')} | "
-                             f"{clean(item['deadline'] or '未明确')} | {cite(item['sources'])} |")
-        else:
-            for item in items:
-                if field == "questions":
-                    body = f"**问：{clean(item['question'])}** 答：{clean(item['answer'])}"
-                elif field == "terms":
-                    body = f"**{clean(item['name'])}**：{clean(item['explanation'])}"
-                else:
-                    body = clean(item["text"])
-                lines.append(f"- {body} {cite(item['sources'])}")
-        lines.append("")
-    return lines
-
-
-def minutes_sections(summary, heading=2):
-    """minutes.md 只保留总结正文：内容概览、核心观点与技术要点、问答整理，不带引用锚点。"""
-    prefix = "#" * heading
-    lines = []
-    for field, title in [("overview", "内容概览"), ("key_points", "核心观点与技术要点"),
-                         ("questions", "问答整理")]:
-        items = summary[field]
-        if not items:
-            continue
-        lines += [f"{prefix} {title}", ""]
-        for item in items:
-            if field == "questions":
-                body = f"**问：{clean(item['question'])}** 答：{clean(item['answer'])}"
-            else:
-                body = clean(item["text"])
-            lines.append(f"- {body}")
-        lines.append("")
-    return lines
-
-
-def render_outputs(job: Path, raw_doc, corrected, audit, result, meta, cfg):
-    source = Path(raw_doc["source"])
-    if not source.exists():
-        source = cfg.input_dir / meta["source"]
-    media_url = quote(os.path.relpath(source, job), safe="/:") if source.exists() else ""
-    names = cfg.speaker_names.get(meta["source"], {})
-    atomic_text(job / "transcript.raw.md", "# 原始 ASR 转写\n\n" + transcript_markdown(raw_doc["segments"], names, media_url))
-    transcript = transcript_markdown(corrected, names, media_url)
-    atomic_text(job / "transcript.md", "# 校正逐字稿\n\n> 时间戳来自原音频对齐；纠错后的词语没有再次强制对齐。\n\n" + transcript)
-    atomic_text(job / "subtitles.raw.srt", srt_text(raw_doc["segments"]))
-    atomic_text(job / "subtitles.srt", srt_text(corrected))
-
-    quality = {
-        "segments": len(corrected), "duration_seconds": meta["duration"], "corrections": len(audit),
-        "rejected_corrections": sum(bool(x["rejected"]) for x in audit),
-        "uncertain_segments": [s["id"] for s in corrected if s.get("uncertain")],
-        "asr_warnings": [{"id": s["id"], "warnings": s["warnings"]} for s in corrected if s.get("warnings")],
-        "diarization_enabled": cfg.diarization,
-        "citation_check": "所有引用 ID 均已校验；语义是否支持结论仍需人工抽查",
-    }
-    write_json(job / "quality.json", quality)
-    lines = [f"# {clean(result['title'])}", ""]
-    if result["asr_model"].startswith("SIMULATED"):
-        lines += ["> 此文件使用模拟文字和模拟响应生成，没有执行 ASR 或真实 LLM 调用，"
-                  "也没有对应的音视频文件。", ""]
-    lines += minutes_sections(result["summary"])
-    atomic_text(job / "minutes.md", "\n".join(lines) + "\n")
+def render_outputs(job: Path, result):
+    """Keep the LLM's Markdown intact; no fixed report sections or HTML escaping."""
+    atomic_text(job / "minutes.md", result["markdown"].strip() + "\n")
 
 
 def render_index(root: Path):

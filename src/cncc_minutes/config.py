@@ -27,6 +27,7 @@ class Settings:
     max_new_tokens: int = 512
     attention: str = "sdpa"
     word_timestamps: bool = True
+    asr_use_glossary: bool = False
     diarization: bool = False
     num_speakers: int = 0
     llm_base_url: str = ""
@@ -40,13 +41,13 @@ class Settings:
     llm_temperature: float = 0.1
     llm_format: str = "json_object"
     llm_extra: dict = field(default_factory=dict)
-    correction_chars: int = 4500
     summary_chars: int = 10000
     reduce_chars: int = 16000
+    allow_knowledge: bool = True
+    summary_style: str = ""
     glossary: str = ""
     speaker_names: dict = field(default_factory=dict)
     context: str = "中文技术论坛"
-    include_transcript: bool = True
     ffmpeg_path: str = ""
 
     @classmethod
@@ -80,6 +81,7 @@ class Settings:
             max_new_tokens=int(os.getenv("ASR_MAX_NEW_TOKENS", "512")),
             attention=os.getenv("ASR_ATTENTION", "sdpa"),
             word_timestamps=boolean(os.getenv("ASR_WORD_TIMESTAMPS", "true")),
+            asr_use_glossary=boolean(os.getenv("ASR_USE_GLOSSARY", "false")),
             diarization=boolean(os.getenv("DIARIZATION", "false")),
             num_speakers=int(os.getenv("DIARIZATION_NUM_SPEAKERS", "0")),
             llm_base_url=os.getenv("LLM_BASE_URL", "").rstrip("/"),
@@ -92,11 +94,11 @@ class Settings:
             llm_temperature=float(os.getenv("LLM_TEMPERATURE", "0.1")),
             llm_format=os.getenv("LLM_RESPONSE_FORMAT", "json_object"),
             llm_extra=json.loads(os.getenv("LLM_EXTRA_BODY", "{}")),
-            correction_chars=int(os.getenv("CORRECTION_CHARS", "4500")),
             summary_chars=int(os.getenv("SUMMARY_CHARS", "10000")),
             reduce_chars=int(os.getenv("REDUCE_INPUT_CHARS", "16000")),
+            allow_knowledge=boolean(os.getenv("SUMMARY_ALLOW_KNOWLEDGE", "true")),
+            summary_style=os.getenv("SUMMARY_STYLE", ""),
             glossary=glossary, speaker_names=names, context=os.getenv("MEETING_CONTEXT", "中文技术论坛"),
-            include_transcript=boolean(os.getenv("INCLUDE_TRANSCRIPT", "true")),
             ffmpeg_path=os.getenv("FFMPEG_PATH", ""),
         )
         if not s.gpus or len(set(s.gpus)) != len(s.gpus):
@@ -108,7 +110,7 @@ class Settings:
         for key in ("batch_size", "max_new_tokens", "llm_concurrency", "llm_timeout", "llm_retries", "llm_max_tokens"):
             if getattr(s, key) <= 0:
                 raise ValueError(f"{key} 必须大于 0")
-        for key in ("correction_chars", "summary_chars", "reduce_chars"):
+        for key in ("summary_chars", "reduce_chars"):
             if getattr(s, key) < 1000:
                 raise ValueError(f"{key} 必须至少为 1000")
         if s.reduce_chars < 4200:

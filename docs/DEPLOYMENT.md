@@ -1,76 +1,86 @@
 # 部署、运行与排错
 
-## 环境
+## 环境与模型
 
-建议使用 Linux x86_64、Python 3.11 或 3.12。每个 GPU 运行一个独立 ASR 工作进程，默认 BF16、SDPA、每批 2 个不超过 25 秒的片段。4090 24GB 是目标配置，实际峰值显存尚未在服务器上测量。建议主机至少 64GB RAM；四进程且开启整场声音分组时，建议 128GB。安装依赖、权重及保留当前素材音频，建议预留至少 40GB 可用磁盘。
+建议 Linux x86_64、Python 3.11/3.12。每张 GPU 一个识别进程，默认 BF16、SDPA、每批 2 个不超过 25 秒的片段。4090 24GB 是目标配置；当前没有在服务器测量峰值显存或吞吐。
 
-```bash
+建议主机至少 64GB RAM；四进程且开启整场声音分组时建议 128GB。依赖、模型、当前音频和运行缓存建议预留至少 40GB 磁盘。
+
+~~~bash
 bash scripts/setup.sh
-```
+~~~
 
-脚本建立 `.venv-server/`，安装 PyTorch 2.8.0 / torchaudio 2.8.0 的 CUDA 12.8 wheel，然后安装本项目和官方 Qwen 推理依赖。核心组合固定在 `constraints-gpu.txt`；安装后的全部版本会写入 `environment.freeze.txt`，便于服务器验收后复现。它不是跨平台完整锁文件。
+脚本创建 .venv-server，安装 PyTorch/torchaudio 2.8.0 的 CUDA 12.8 wheel，再安装项目。核心约束在 constraints-gpu.txt，安装后的全部版本写入 environment.freeze.txt。服务器需要可运行这些 CUDA wheel 的驱动，建议较新的 570 系列或更新驱动并实际检查；默认不要求编译 FlashAttention。安装依据见 [PyTorch 官方历史版本](https://pytorch.org/get-started/previous-versions/)。
 
-安装方式参照 [PyTorch 官方历史版本](https://pytorch.org/get-started/previous-versions/)。服务器应安装能运行 CUDA 12.8 wheel 的 NVIDIA 驱动，建议使用较新的 570 系列或更新驱动并通过实际 CUDA 检查；`nvidia-smi` 上的 CUDA 标识不等于 Python 实际使用的 runtime。旧驱动的兼容能力有条件，见 [NVIDIA 兼容性说明](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html)。SDPA 模式不要求本机编译 FlashAttention 或安装完整 CUDA Toolkit。
+基础音频处理优先用系统 ffmpeg，缺少时使用 imageio-ffmpeg 分发的程序。可选 pyannote/torchcodec 建议安装系统 ffmpeg 及动态库：
 
-基础转写使用系统 ffmpeg，缺失时使用随 `imageio-ffmpeg` 分发的可执行文件。可选 pyannote/torchcodec 建议同时安装系统 ffmpeg 及其动态库：
-
-```bash
+~~~bash
 sudo apt-get update
 sudo apt-get install -y ffmpeg libsndfile1
-```
+~~~
 
-不具备管理员权限时，可由管理员安装，或者使用环境中的 ffmpeg 并通过 `FFMPEG_PATH` 指定路径。
+模型下载见 [MODELS.md](MODELS.md)。运行时只加载本地 ASR/对齐/声音分组目录。
 
-## LLM 配置
+## 配置
 
-根目录已有 `.env` 占位配置，安装脚本不会覆盖它。相对路径均以 `.env` 所在目录为根；系统环境变量优先于 `.env`。不要把真实密钥写进命令参数或纳入版本控制。
+相对路径以 .env 所在目录为根。系统环境变量优先；安装脚本不会覆盖已有 .env。不要公开密钥。
 
-| 配置 | 默认 | 说明 |
+| 配置 | 默认 | 作用 |
 | --- | --- | --- |
-| `LLM_BASE_URL` | 占位 | 完整服务前缀，如 `https://host/v1`，不包含末尾 `/chat/completions` |
-| `LLM_API_KEY` / `LLM_MODEL` | 占位 | 服务密钥和真实模型名；本地免鉴权服务可用 `local` |
-| `LLM_CONCURRENCY` | 4 | 多视频共享的最大并发请求数 |
-| `LLM_REQUESTS_PER_MINUTE` | 0 | 单次运行共享的发起请求速率，0 不限制；多机时每台单独计算 |
-| `LLM_TIMEOUT_SECONDS` | 180 | 单次请求超时 |
-| `LLM_RETRIES` | 4 | 每次请求最多尝试次数，包括第一次 |
-| `LLM_MAX_TOKENS` | 8192 | 最大输出 token；思考模型可能需要增大或关闭思考 |
-| `LLM_RESPONSE_FORMAT` | `json_object` | 服务不支持该字段时设 `none`，仍要求正文能解析为 JSON |
-| `LLM_EXTRA_BODY` | `{}` | 额外请求参数 JSON；如服务支持，可用 `{"enable_thinking":false}` |
-| `CORRECTION_CHARS` | 4500 | 每组纠错 target 的 JSON 字符预算，另带少量前后文 |
-| `SUMMARY_CHARS` | 10000 | 局部章节输入的 JSON 字符预算 |
-| `REDUCE_INPUT_CHARS` | 16000 | 跨章节合并输入预算，包含原始片段引用，至少 4200 |
-| `MEETING_CONTEXT` | 技术论坛说明 | 会议背景，可补充实际议程；不要混入无来源结论 |
-| `INCLUDE_TRANSCRIPT` | true | 最终纪要附完整校正逐字稿；关闭后引用跳转外部 `transcript.md` |
+| LLM_BASE_URL / LLM_API_KEY / LLM_MODEL | 占位 | 兼容服务地址前缀、密钥、模型名；本地免鉴权 key 可填 local |
+| LLM_CONCURRENCY | 4 | 单次运行所有视频共享的最大请求并发 |
+| LLM_REQUESTS_PER_MINUTE | 0 | 单次运行共享的发起请求速率；0 不限制 |
+| LLM_TIMEOUT_SECONDS | 180 | 请求超时 |
+| LLM_RETRIES | 4 | 包括首次在内的最多尝试次数 |
+| LLM_MAX_TOKENS | 8192 | 单次输出 token 上限，需适合模型和主题写作长度 |
+| LLM_RESPONSE_FORMAT | json_object | 只作用于内部阅读/规划；不支持时填 none。正文写作始终直接请求 Markdown |
+| LLM_EXTRA_BODY | {} | 服务特有参数 JSON，不可覆盖核心字段 |
+| SUMMARY_CHARS | 10000 | 一组原始转写的 JSON 字符预算 |
+| REDUCE_INPUT_CHARS | 16000 | 主题目录和写作材料的字符预算，至少 4200 |
+| SUMMARY_ALLOW_KNOWLEDGE | true | 允许适量通用知识解释，要求与会议观点区分 |
+| SUMMARY_STYLE | 空 | 自然语言写作偏好，不预设各主题统一栏目 |
+| MEETING_CONTEXT | 中文技术论坛 | 会议背景，不能混入没有来源的实测结论 |
+| ASR_USE_GLOSSARY | false | 显式开启后才把 glossary.txt 注入 ASR；需防止词表回声 |
 
-建议选上下文至少 64K、擅长中文与结构化输出的模型。这里的预算是字符，不是 token，此外还有系统提示、术语表、JSON schema 和输出。不同模型分词不同；如果服务报上下文超长，降低三个字符预算、缩短术语表，或改用更大上下文模型。`LLM_EXTRA_BODY` 支持服务商特有参数，不允许覆盖模型、消息、输出上限等核心字段。
+建议使用至少 64K 上下文、擅长中文长文与结构化输出的模型。字符预算不等于 token；提示、上下文、schema 和输出也占空间。LLM_MAX_TOKENS 是每次写作的上限，不是整篇总长度上限。
 
-本地部署的任意兼容服务也可以使用。例如将已部署的 LLM 服务地址填为 `http://127.0.0.1:8000/v1`。本项目不负责安装/启动 LLM；若与 ASR 共用显卡，应在 `GPU_DEVICES` 中排除该卡，避免显存争用。
+长主题可能多次续写。响应 finish_reason=length 会明确失败，已完成的其他请求保留；增加输出上限或降低输入预算后重跑。思考模型还需为思考预留 token，可按服务支持情况通过 LLM_EXTRA_BODY 关闭思考。
 
-启用完整流程时，**转写文字、术语和背景会发送给你配置的 LLM 服务**，不会把视频或音频上传给 LLM。ASR 和可选声音分组在本地执行。需要完全离线时，把 LLM 地址设为内网本地服务；只有 ASR 离线开关不足以让整个流程离线。
+旧版 CORRECTION_CHARS、INCLUDE_TRANSCRIPT 不再读取；LLM 校正、固定摘要字段及逐字稿附录已经移除。现有 .env 中保留旧变量不会触发旧行为。
 
-## 单台机器四张卡
+转写与内部材料会发送到所配置 LLM 服务，音视频不上传。完全离线需把 LLM 也部署在本地/内网；ASR 离线开关只约束本地模型。若 LLM 与 ASR 同机，GPU_DEVICES 应排除给 LLM 使用的显卡。
 
-```dotenv
+## 已有转写，直接更新总结
+
+~~~bash
+.venv-server/bin/pip install -e .
+.venv-server/bin/cncc-minutes summarize
+~~~
+
+从每场 transcript.raw.json 开始，跳过 ASR 和旧纠错稿。改变写作偏好、知识补充开关或模型时重新运行 summarize，相关缓存自动失效。旧版 summary.json 格式不会被当成新结果。
+
+新版不再生成校正逐字稿、纠错审计及质量报告；服务器上原有这些文件会保留作为历史产物。不要通过只改旧 minutes.md 来改变后续生成行为。
+
+## 单机四卡
+
+~~~dotenv
 GPU_DEVICES=0,1,2,3
-```
+~~~
 
-```bash
+~~~bash
 .venv-server/bin/cncc-minutes doctor --llm
 .venv-server/bin/cncc-minutes run
-```
+~~~
 
-主进程建立共享任务队列，四个常驻 GPU 进程动态领取视频。一个视频在一张卡上顺序分批识别，不跨卡拆同一视频。某场 ASR 结束后即转交 LLM 线程，GPU 可以继续识别下一场；LLM 和识别阶段重叠执行。
+每张卡动态领取完整视频，一个视频不跨卡拆分。某场识别完成即可进入 LLM 线程，GPU 接着识别下一场。
 
-如果外层已设置 `CUDA_VISIBLE_DEVICES=2,3`，则 `.env` 的 `GPU_DEVICES` 应填写可见逻辑编号 `0,1`，程序会正确映射回外层分配的设备。不要填写 `2,3`。MIG/UUID 形式的外层设备分配可以保留，项目内部仍填数字逻辑编号。
+若外层 CUDA_VISIBLE_DEVICES=2,3，内部填 GPU_DEVICES=0,1，程序按外层分配映射到物理卡。不要再填物理编号 2,3。
 
-## 四台机器，每台一张卡
+## 四台单卡服务器
 
-每台都复制完整项目和**相同且固定的视频文件集合**，配置本机 `GPU_DEVICES=0`、模型路径及 LLM。各服务器的输出目录应互相独立。
+每台复制相同、固定的输入视频集合，设置 GPU_DEVICES=0 和独立输出根。四台分别执行：
 
-```bash
-# 每台先查看自己将处理哪些文件
-.venv-server/bin/cncc-minutes plan --shard-count 4 --shard-index 0
-
+~~~bash
 # 服务器 0
 .venv-server/bin/cncc-minutes run --shard-count 4 --shard-index 0
 # 服务器 1
@@ -79,44 +89,34 @@ GPU_DEVICES=0,1,2,3
 .venv-server/bin/cncc-minutes run --shard-count 4 --shard-index 2
 # 服务器 3
 .venv-server/bin/cncc-minutes run --shard-count 4 --shard-index 3
-```
+~~~
 
-分配方式为排序后按编号轮转。当前五个视频会分成 2/1/1/1，确保四台都有任务。在这一批完成前，不要只给部分机器增删输入，否则分配会变化。每台都须使用同样的 `--shard-count` 和不同的 `--shard-index`。这是无需协调服务的静态分片；跨机器没有全局动态负载均衡。
+分配按文件排序轮转，当前五场分为 2/1/1/1。可先用 plan --shard-count 4 --shard-index 0 查看分配。一批完成前不要只给部分机器增删文件，否则分配变化会重复或遗漏。
 
-若机器共享同一文件系统，可用环境变量设置同层级的不同输出根，例如服务器 0 用 `OUTPUT_DIR=./output-node0`，服务器 1 用 `OUTPUT_DIR=./output-node1`。同一个输出根有独占锁，不允许同时启动两次运行。
+共享文件系统时使用不同的同层级输出根，例如 OUTPUT_DIR=./output-node0、./output-node1。同一输出根有独占锁。全部结束后合并各视频目录，保留原名，用 index 更新索引。
 
-全部完成后，把各服务器 `output/` 内的各视频目录合并到一个 `output/`，保留目录原名。不要在任务运行中移动缓存。可通过 `cncc-minutes index` 重新生成索引。相同视频集合和相同输入根层级会生成相同任务目录名；原文件内容变动会使缓存重新计算。
+各台的 LLM 并发/RPM 独立计算，使用同一账户时要按总额度分配。
 
-多台机器如果共用同一 LLM 账户，总并发和 RPM 是各台之和。例如总限制 60 RPM 时，每台可设 `LLM_REQUESTS_PER_MINUTE=15`。
+## 恢复与排错
 
-## 恢复、更新与阶段运行
+- 中断后执行原命令：已导出的音频、已识别片段和成功的 LLM 请求会复用。
+- 新运行开始时，旧 minutes.md 移到 minutes.previous.md；只有状态 complete 才代表本轮成功。
+- 状态查看用 status；整批结果在 last_run.json，单场错误在 error.json。
+- 429、网络错误、部分 5xx、结构或正文校验失败会有限重试；认证/参数类 4xx 立即失败。
+- 源视频完整哈希可检测内容替换。模型指纹使用文件元数据和小配置内容；手工替换大权重应更新修改时间。
+- 修改 ASR 设置或开启/关闭词表后执行 run；只更新总结执行 summarize。
+- .env 只在命令启动时读取，不热加载。
 
-- 中断后直接重跑相同命令。音频、分片、已完成 ASR 片段和通过校验的 LLM 响应均可复用。
-- API 超时、429、部分 5xx、非法 JSON、片段 ID 不匹配等会有有限重试。认证、地址、参数等 4xx 会立即失败并提示修改配置。
-- 一场失败不会阻止其他场完成。`output/last_run.json` 记录整批成功/失败情况。
-- 换 LLM、修改背景或说话人姓名：运行 `summarize`，不加载 GPU 模型。只修改姓名不会重新跑纠错，但章节与综合摘要会更新。
-- 修改热词表后，`run` 会重新跑 ASR 及下游；若只希望对已有文字纠错，可用 `summarize`。
-- 修改 ASR 模型、语言、时间戳、分片参数：运行 `run`，相关缓存自动失效。修改 batch size 不强制废弃已识别片段。
-- `.env` 改变后必须启动新的命令；运行中的进程不会热加载。
-- 不要手改 `transcript.corrected.json` 期待自动保留，重建可能覆盖。原始转写 JSON 是 `summarize` 的输入，手动修正其 text 后可重新总结；保留 id 和时间字段，并另行备份。
-- 模型指纹使用文件元数据及小配置内容，不逐个完整哈希大权重；手动替换权重时应更新文件修改时间，或删除该视频的 ASR 缓存重新识别。
-- 每次新运行开始时，旧 `minutes.md` 会移为 `minutes.previous.md`。只有 `report_status.json` 为 complete、索引状态为 complete 的纪要属于本轮成功结果。
-
-## 排错
-
-| 现象 | 处理 |
+| 问题 | 处理 |
 | --- | --- |
-| `CUDA 不可用` | 检查 `nvidia-smi`、PyTorch 是否为 CUDA wheel、外层可见卡及驱动 |
-| 多卡进程退出 | 查看视频目录 `error.json` 和系统 OOM 日志；减小 GPU 数或增加主机 RAM |
-| 批次显存不足 | 程序会自动二分当前批次；仍失败时改 `ASR_BATCH_SIZE=1`、`ASR_CHUNK_SECONDS=15` 后重跑 |
-| 单片显存不足 | 减小片长，或者改用 0.6B 模型；根据需要关闭词时间戳或声音分组 |
-| 本地模型缺失 | 下载完整原始模型目录，不要混用 `-hf` 模型，核对 `.env` 相对路径 |
-| LLM 400 | 核对模型、上下文长度、`response_format` 和额外参数；服务不支持格式字段时设为 none |
-| LLM 401/403 | 替换 API key / 权限，检查服务前缀 |
-| finish_reason=length | 增大最大输出 token、减少输入预算；思考模型可按服务能力关闭思考 |
-| 引用/JSON 多次校验失败 | 换结构化输出能力更强的模型，先跑短样本验证；错误不会被当作成功纪要 |
-| 对齐文字不一致 | 自动保留完整 ASR 原文，退回音频片段时间，并在质量报告标记 |
-| 人名或专有词不准 | 补充术语表并回听；LLM 不能恢复 ASR 完全遗漏的信息 |
-| 字幕一条很长 | 字幕按转写片段生成，适用于检索回放；没有实现影视字幕的字符数/阅读速度排版 |
+| CUDA 不可用 | 检查驱动、CUDA PyTorch wheel、外层设备分配 |
+| GPU 批次显存不足 | 程序二分当前批次；仍失败可设 batch=1、片长=15 或换 0.6B |
+| 子进程意外退出 | 查看系统 OOM、主机内存、单场错误后重跑 |
+| 词表复读 | 默认保持 ASR_USE_GLOSSARY=false；若旧转写大量污染，需要 run 重识别 |
+| LLM 400 | 核对地址、模型、上下文长度、格式和额外参数 |
+| JSON 模式不支持 | LLM_RESPONSE_FORMAT=none；内部阅读/规划仍需返回合法 JSON |
+| 输出截断 | 增大 LLM_MAX_TOKENS，或降低 SUMMARY_CHARS / REDUCE_INPUT_CHARS |
+| 主题分配校验反复失败 | 换更可靠的模型或降低输入目录预算，先用短样本验收 |
+| 没有实质主题 | 检查音轨和原始转写，程序不会用知识补充编造缺失演讲 |
 
-先用短样本验收，再放开全量处理，步骤见 [VALIDATION.md](VALIDATION.md)。
+验收方法见 [VALIDATION.md](VALIDATION.md)。

@@ -40,24 +40,49 @@ class LLMClient:
             {"role": "system", "content": system + "\n只返回 JSON 对象，必须符合此 schema：\n" + schema_text},
             {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
         ]
-        key = digest({"identity": self.cfg.llm_identity(), "messages": messages, "client_version": 1})
-        path = job / "cache" / "llm" / f"{key}.json"
 
         def parse(value):
-            result = schema.model_validate(value)
+            result = schema.model_validate(json.loads(self.strip_fence(value)))
             if validate:
                 validate(result)
             return result
 
+        return self._complete(job, stage, messages, parse, "json")
+
+    @staticmethod
+    def strip_fence(text):
+        text = text.strip()
+        if text.startswith("```") and text.endswith("```"):
+            text = "\n".join(text.splitlines()[1:-1]).strip()
+        return text
+
+    def markdown(self, job: Path, stage: str, system: str, payload, validate=None):
+        messages = [{"role": "system", "content": system},
+                    {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]
+
+        def parse(value):
+            result = self.strip_fence(value)
+            if not result:
+                raise ValueError("Markdown 正文为空")
+            if validate:
+                validate(result)
+            return result
+
+        return self._complete(job, stage, messages, parse, "markdown")
+
+    def _complete(self, job, stage, messages, parse, mode):
+        key = digest({"identity": self.cfg.llm_identity(), "messages": messages, "mode": mode, "client_version": 2})
+        path = job / "cache" / "llm" / f"{key}.json"
+        original_messages = messages
         if path.exists():
-            return parse(read_json(path)["result"])
+            return parse(read_json(path)["content"])
         error = ""
         for attempt in range(self.cfg.llm_retries):
             retry_after = 0.0
             body = {"model": self.cfg.llm_model, "messages": messages,
                     "temperature": self.cfg.llm_temperature, "max_tokens": self.cfg.llm_max_tokens,
                     "stream": False, **self.cfg.llm_extra}
-            if self.cfg.llm_format == "json_object":
+            if mode == "json" and self.cfg.llm_format == "json_object":
                 body["response_format"] = {"type": "json_object"}
             try:
                 with self.slots:
@@ -83,12 +108,9 @@ class LLMClient:
                 content = choice["message"]["content"]
                 if not isinstance(content, str) or not content.strip():
                     raise ValueError("LLM 没有返回正文（请检查思考模式及输出 token 限制）")
-                content = content.strip()
-                if content.startswith("```"):
-                    content = "\n".join(content.splitlines()[1:-1]).strip()
-                result = parse(json.loads(content))
+                result = parse(content)
                 write_json(path, {"stage": stage, "model": self.cfg.llm_model,
-                                  "result": result.model_dump(), "usage": data.get("usage", {})})
+                                  "content": content, "usage": data.get("usage", {})})
                 event(job, stage, "完成 LLM 请求", attempt=attempt + 1, usage=data.get("usage", {}))
                 return result
             except RuntimeError:
@@ -99,6 +121,7 @@ class LLMClient:
                 if attempt + 1 < self.cfg.llm_retries:
                     self.sleep(max(retry_after, min(30, 2 ** attempt) + random.uniform(0, 0.5)))
                 # Schema errors get one bounded clarification; do not keep growing the context on retries.
-                messages = messages[:2] + [{"role": "user", "content":
-                    "上一次响应未通过校验，请重新生成完整 JSON。错误：" + error[:500]}]
+                output = "JSON" if mode == "json" else "Markdown"
+                messages = original_messages + [{"role": "user", "content":
+                    f"上一次响应未通过校验，请重新生成完整 {output}。错误：" + error[:500]}]
         raise RuntimeError(f"LLM 请求经过 {self.cfg.llm_retries} 次仍失败：{error}")

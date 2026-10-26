@@ -28,7 +28,7 @@ class ASREngine:
             "aligner": model_signature(cfg.aligner_model) if cfg.word_timestamps else None,
             "language": cfg.language, "timestamps": cfg.word_timestamps,
             "tokens": cfg.max_new_tokens, "attention": cfg.attention,
-            "glossary": cfg.glossary, "implementation": 2,
+            "glossary": cfg.glossary if cfg.asr_use_glossary else "", "implementation": 3,
         })
 
     def load(self):
@@ -57,7 +57,8 @@ class ASREngine:
             self.load()
             return self.model.transcribe(
                 audio=[(a, SAMPLE_RATE) for a in arrays],
-                context=f"以下是可能涉及的术语，按实际语音转写：\n{self.cfg.glossary}" if self.cfg.glossary else "",
+                context=(f"以下是可能涉及的术语，按实际语音转写：\n{self.cfg.glossary}"
+                         if self.cfg.asr_use_glossary and self.cfg.glossary else ""),
                 language=None if self.cfg.language.lower() == "auto" else self.cfg.language,
                 return_time_stamps=self.cfg.word_timestamps,
             )

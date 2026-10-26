@@ -134,6 +134,7 @@ def test_oom_batch_halves_and_preserves_result_order(cfg, tmp_path, monkeypatch)
 
     class Model:
         def transcribe(self, audio, **kwargs):
+            assert kwargs["context"] == ""
             sizes.append(len(audio))
             if len(audio) > 1:
                 raise OutOfMemoryError()

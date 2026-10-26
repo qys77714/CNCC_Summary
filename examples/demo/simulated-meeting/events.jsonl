@@ -1,10 +1,19 @@
-{"time": "2026-10-26T18:48:51+0800", "stage": "correction", "message": "正在校正转写", "batch": 1, "total": 1}
-{"time": "2026-10-26T18:48:51+0800", "stage": "correction", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
-{"time": "2026-10-26T18:48:51+0800", "stage": "chapters", "message": "正在提炼时间章节", "chapter": 1, "total": 1}
-{"time": "2026-10-26T18:48:51+0800", "stage": "chapters", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
 {"time": "2026-10-26T18:48:51+0800", "stage": "complete", "message": "会议纪要已生成", "report": "/Users/qys/Documents/Project/CNCC/examples/demo/simulated-meeting/minutes.md"}
-{"time": "2026-10-26T18:57:57+0800", "stage": "chapters", "message": "正在提炼时间章节", "chapter": 1, "total": 1}
 {"time": "2026-10-26T18:57:57+0800", "stage": "complete", "message": "会议纪要已生成", "report": "/Users/qys/Documents/Project/CNCC/examples/demo/simulated-meeting/minutes.md"}
-{"time": "2026-10-26T18:59:16+0800", "stage": "correction", "message": "正在校正转写", "batch": 1, "total": 1}
-{"time": "2026-10-26T18:59:16+0800", "stage": "chapters", "message": "正在提炼时间章节", "chapter": 1, "total": 1}
 {"time": "2026-10-26T18:59:16+0800", "stage": "complete", "message": "会议纪要已生成", "report": "/Users/qys/Documents/Project/CNCC/examples/demo/simulated-meeting/minutes.md"}
+{"time": "2026-10-26T21:26:46+0800", "stage": "reading", "message": "正在阅读转写并保留主题细节", "batch": 1, "total": 1}
+{"time": "2026-10-26T21:26:46+0800", "stage": "reading", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
+{"time": "2026-10-26T21:26:46+0800", "stage": "outline", "message": "正在归并全场主题", "level": 1, "batch": 1, "total": 1}
+{"time": "2026-10-26T21:26:46+0800", "stage": "outline", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
+{"time": "2026-10-26T21:26:46+0800", "stage": "writing", "message": "正在详细撰写主题", "topic": "记忆的写入与检索", "part": 1, "total": 1}
+{"time": "2026-10-26T21:26:46+0800", "stage": "writing", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
+{"time": "2026-10-26T21:26:46+0800", "stage": "writing", "message": "正在详细撰写主题", "topic": "遗忘机制与噪声控制", "part": 1, "total": 1}
+{"time": "2026-10-26T21:26:46+0800", "stage": "writing", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
+{"time": "2026-10-26T21:26:46+0800", "stage": "complete", "message": "主题总结已生成", "report": "/Users/qys/Documents/Project/CNCC/examples/demo/simulated-meeting/minutes.md"}
+{"time": "2026-10-26T21:31:42+0800", "stage": "reading", "message": "正在阅读转写并保留主题细节", "batch": 1, "total": 1}
+{"time": "2026-10-26T21:31:42+0800", "stage": "outline", "message": "正在归并全场主题", "level": 1, "batch": 1, "total": 1}
+{"time": "2026-10-26T21:31:42+0800", "stage": "writing", "message": "正在详细撰写主题", "topic": "记忆的写入与检索", "part": 1, "total": 1}
+{"time": "2026-10-26T21:31:42+0800", "stage": "writing", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
+{"time": "2026-10-26T21:31:42+0800", "stage": "writing", "message": "正在详细撰写主题", "topic": "遗忘机制与噪声控制", "part": 1, "total": 1}
+{"time": "2026-10-26T21:31:42+0800", "stage": "writing", "message": "完成 LLM 请求", "attempt": 1, "usage": {"total_tokens": 0}}
+{"time": "2026-10-26T21:31:42+0800", "stage": "complete", "message": "主题总结已生成", "report": "/Users/qys/Documents/Project/CNCC/examples/demo/simulated-meeting/minutes.md"}
