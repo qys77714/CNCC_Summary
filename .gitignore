@@ -2,12 +2,13 @@
 .venv-server/
 .env
 models/
-# output/ 只同步纪要与索引,音频/转写等大体量文件保持忽略
+# output/ 同步纪要、校正后转录文本与索引,音频等大体量文件保持忽略
 output/*
 !output/README.md
 !output/*/
 output/*/*
 !output/*/minutes.md
+!output/*/transcript.md
 __pycache__/
 *.py[cod]
 *.egg-info/
